@@ -1,5 +1,20 @@
+require('./Wconsole.css');
+require('./prettify.packed.js');
+require('./EventSource.js');
 window.onload = function () {
-  console.log(window);
+  console.log('ewif');
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(require('./sw.js'), { scope: '/' });
+  }
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-1656750-21', 'auto');
+  ga('send', 'pageview');
+
+
+
   window.addEventListener('beforeinstallprompt', function(event) {
     if (window.matchMedia('(display-mode: standalone)').matches) {
       console.log('this should not fire when in app mode: crbug...');
@@ -669,13 +684,18 @@ window.onload = function () {
 
           window[callback] = function (id) {
             console.log('window[callback]' + id);
+            console.log(sse);
             remoteId = id;
             if (sse !== null) sse.close();
 
             sse = new EventSource('/remote/' + id + '/log');
             sse.onopen = function () {
+              console.log('sse.onopen = function () {');
               remoteId = id;
-              window.top.info('Connected to "' + id + '"\n\n<script src="'+ location.origin +'/js/remote.js?' + id + '"></script>');
+              //window.top.info('Connected to "' + id + '"\n\n<script src="'+ location.origin +'/Wremote.entry.js?' + id + '"></script>');
+              var hello = "http://lx.waimai.baidu.com:1234/toOther.entry.js"
+              window.top.info('Connected to "' + id + '"\n\n<script src="http://lx.waimai.baidu.com:1234/toOther.entry.js?' + id + '"></script>');
+            
             };
 
             sse.onmessage = function (event) {

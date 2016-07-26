@@ -1,22 +1,26 @@
 var webpack = require('webpack');
+var ExtractTextPlugin = require('extract-text-webpack-plugin');
 var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
-var publicPath = 'http://localhost:3000/';
+var publicPath = 'http://lx.waimai.baidu.com:1234/';
 var hotMiddlewareScript = 'webpack-hot-middleware/client?reload=true';
 
 var devConfig = {
-    entry: [
-        "./client/js/Wconsole.js",
-    ],
-/*    output: {
-        filename: './[name]/bundle.js',
-        path: path.resolve(__dirname, './public'),
-        publicPath: publicPath
-    },  */  
+    entry: {
+        index: [
+            "./client/Wconsole/Wconsole.js",
+        ],
+        remote: [
+            "./client/Wconsole/EventSource.js"
+        ],
+        toOther: [
+            "./client/Wconsole/remote.js"
+        ]
+    }, 
     output: {
-        path: path.resolve(__dirname, './public'),
-        filename: 'Wconsole.entry.js',
-        chunkFilename: "Wconsole.chunk.js",
+        path: path.join(__dirname, './public'),
+        filename: '[name].entry.js',
+        chunkFilename: "[id].chunk.js",
         publicPath: publicPath, //网站运行时的访问路径
     },
     devtool: 'inline-source-map',
@@ -25,8 +29,8 @@ var devConfig = {
             test: /\.(png|jpg)$/,
             loader: 'url?limit=8192&context=client&name=[path][name].[ext]'
         }, {
-            test: /\.scss$/,
-            loader: 'style!css?sourceMap!resolve-url!sass?sourceMap'
+            test: /\.css$/, 
+            loader:  ExtractTextPlugin.extract("style-loader","css-loader")
         }, {
             test: /\.less$/,
             loader: 'style!css?sourceMap!resolve-url!sass?sourceMap'
@@ -40,8 +44,23 @@ var devConfig = {
         new HtmlWebpackPlugin({
             filename: 'index.html',
             template: path.join(__dirname, 'client/index.html'),
-            inject: true
-        })
+            inject: true,
+            chunks: ['index']
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'remote.html',
+            template: path.join(__dirname, 'client/remote.html'),
+            inject: true,
+            chunks: ['remote']
+        }),
+        new HtmlWebpackPlugin({
+            filename: 'toOther.html',
+            template: path.join(__dirname, 'client/toOther.html'),
+            inject: true,
+            chunks: ['toOther']
+        }),
+        //new webpack.optimize.CommonsChunkPlugin('common.js'),
+        new ExtractTextPlugin("styles.css"), 
     ]
 };
 

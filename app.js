@@ -4,7 +4,9 @@ var express = require('express'),
 
 var isDev = process.env.NODE_ENV !== 'production';
 var app = express();
-var port = 3000;
+var port = 1234;
+var uuid = require('node-uuid').v4;
+const sessions = { run: {}, log: {} };
 
 app.engine('html', consolidate.ejs);
 app.set('view engine', 'html');
@@ -34,6 +36,98 @@ if (isDev) {
             colors: true
         }
     }));
+function ping(type, id) {
+  console.log('sending ping to %s', id);
+  let res = sessions[type][id];
+  if (res.connection.writable) {
+    res.write('eventId: 0\n\n');
+  } else {
+    // remove the res object if it's no longer writable
+    delete sessions[type][id];
+  }
+}
+
+/*setInterval(() => {
+  Object.keys(sessions.run).forEach(ping.bind(null, 'run'));
+  Object.keys(sessions.log).forEach(ping.bind(null, 'log'));
+}, 25 * 1000);*/
+
+setInterval(function () {
+    Object.keys(sessions.run).forEach(ping.bind(null, 'run'));
+    Object.keys(sessions.log).forEach(ping.bind(null, 'log'));
+},25*1000);
+
+app.get('/remote/:id?', (req, res) => {
+  let query = req.query;
+  let id = req.params.id || uuid();
+  res.writeHead(200, {'Content-Type': 'text/javascript'});
+  res.end((query.callback || 'callback') + '("' + id + '");');
+});
+app.get('/remote/:id?', (req, res) => {
+  let query = req.query;
+  let id = req.params.id || uuid();
+  res.writeHead(200, {'Content-Type': 'text/javascript'});
+  res.end((query.callback || 'callback') + '("' + id + '");');
+});
+
+app.get('/remote/:id/log', (req, res) => {
+  let id = req.params.id;
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+  });
+  res.write('eventId: 0\n\n');
+
+  sessions.log[id] = res;
+  sessions.log[id].xhr = req.headers['x-requested-with'] === 'XMLHttpRequest';
+});
+
+app.get('/remote/:id/run', function (req, res) {
+  let id = req.params.id;
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+  });
+  res.write('eventId: 0\n\n');
+  sessions.run[id] = res;
+  sessions.run[id].xhr = req.headers['x-requested-with'] === 'XMLHttpRequest';
+});
+
+app.post('/remote/:id/run', (req, res) => {
+  let id = req.params.id;
+
+  console.log('post run: %s', id, req.body);
+
+  if (sessions.run[id]) {
+    sessions.run[id].write(`data: ${req.body.data}\neventId:${ ++eventId}\n\n`);
+
+    if (sessions.run[id].xhr) {
+      sessions.run[id].end(); // lets older browsers finish their xhr request
+    }
+  }
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end();
+});
+app.post('/remote/:id/log', (req, res) => {
+  // post made to send log to jsconsole
+  let id = req.params.id;
+  // passed over to Server Sent Events on jsconsole.com
+  if (sessions.log[id]) {
+    sessions.log[id].write(`data: ${req.body.data}\neventId:${ ++eventId}\n\n`);
+
+    if (sessions.log[id].xhr) {
+      sessions.log[id].end(); // lets older browsers finish their xhr request
+    }
+  }
+
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end();
+});
+
+/*app.get(, restify.serveStatic({
+  directory: __dirname + '/public',
+  default: 'index.html',
+}));*/
     app.use(webpackHotMiddleware(compiler));
 
     require('./server/routes')(app);

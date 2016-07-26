@@ -18,7 +18,8 @@
   "dependencies": {
     "consolidate": "^0.14.0",
     "ejs": "^2.4.1",
-    "express": "^4.13.4"
+    "express": "^4.13.4",
+    "node-uuid": "^1.4.7"
   },
   "devDependencies": {
     "browser-sync": "^2.13.0",

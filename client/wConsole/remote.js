@@ -86,7 +86,9 @@ var lastSrc = last.getAttribute('src'),
 
 var remoteFrame = document.createElement('iframe');
 remoteFrame.style.display = 'none';
-remoteFrame.src = origin + '/remote.html?' + id;
+//remoteFrame.src = origin + '/remote.html?' + id;
+//http://lx.waimai.baidu.com:1234/remote.html
+remoteFrame.src = 'http://lx.waimai.baidu.com:1234/remote.html?' + id;
 
 // an attempt to allow this code to be included in the head element
 document.documentElement.appendChild(remoteFrame);
